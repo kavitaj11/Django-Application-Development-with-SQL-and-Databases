@@ -1,0 +1,171 @@
+@echo off
+setlocal
+
+echo [*] Creating directory structure...
+mkdir salesforce-mcp-ui-tests\src\test\java\com\salesforce\models
+mkdir salesforce-mcp-ui-tests\src\test\java\com\salesforce\components
+mkdir salesforce-mcp-ui-tests\src\test\java\com\salesforce\pages
+mkdir salesforce-mcp-ui-tests\src\test\java\com\salesforce\tests
+mkdir salesforce-mcp-ui-tests\src\test\java\com\salesforce\utils
+mkdir salesforce-mcp-ui-tests\src\test\resources
+
+cd salesforce-mcp-ui-tests
+
+echo [*] Creating pom.xml...
+> pom.xml (
+echo ^<project xmlns="http://maven.apache.org/POM/4.0.0"^>
+echo   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+echo   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"^>
+echo   ^<modelVersion^>4.0.0^</modelVersion^>
+echo   ^<groupId^>com.salesforce^</groupId^>
+echo   ^<artifactId^>salesforce-mcp-ui-tests^</artifactId^>
+echo   ^<version^>1.0.0^</version^>
+echo   ^<dependencies^>
+echo     ^<dependency^>
+echo       ^<groupId^>org.seleniumhq.selenium^</groupId^>
+echo       ^<artifactId^>selenium-java^</artifactId^>
+echo       ^<version^>4.11.0^</version^>
+echo     ^</dependency^>
+echo     ^<dependency^>
+echo       ^<groupId^>org.testng^</groupId^>
+echo       ^<artifactId^>testng^</artifactId^>
+echo       ^<version^>7.8.0^</version^>
+echo       ^<scope^>test^</scope^>
+echo     ^</dependency^>
+echo     ^<dependency^>
+echo       ^<groupId^>io.github.bonigarcia^</groupId^>
+echo       ^<artifactId^>webdrivermanager^</artifactId^>
+echo       ^<version^>5.5.3^</version^>
+echo     ^</dependency^>
+echo   ^</dependencies^>
+echo   ^<build^>
+echo     ^<plugins^>
+echo       ^<plugin^>
+echo         ^<groupId^>org.apache.maven.plugins^</groupId^>
+echo         ^<artifactId^>maven-surefire-plugin^</artifactId^>
+echo         ^<version^>3.0.0-M8^</version^>
+echo         ^<configuration^>
+echo           ^<includes^>
+echo             ^<include^>**/*Test.java^</include^>
+echo           ^</includes^>
+echo         ^</configuration^>
+echo       ^</plugin^>
+echo     ^</plugins^>
+echo   ^</build^>
+echo ^</project^>
+)
+
+echo [*] Creating sample Java files...
+
+:: User.java
+> src\test\java\com\salesforce\models\User.java (
+echo package com.salesforce.models; 
+echo public class User {
+echo     private String username;
+echo     private String password;
+echo     public User(String username, String password) {
+echo         this.username = username;
+echo         this.password = password;
+echo     }
+echo     public String getUsername() { return username; }
+echo     public String getPassword() { return password; }
+echo }
+)
+
+:: LightningButton.java
+> src\test\java\com\salesforce\components\LightningButton.java (
+echo package com.salesforce.components;
+echo import org.openqa.selenium.By;
+echo import org.openqa.selenium.WebDriver;
+echo import org.openqa.selenium.WebElement;
+echo public class LightningButton {
+echo     private WebDriver driver;
+echo     private By locator;
+echo     public LightningButton(WebDriver driver, By locator) {
+echo         this.driver = driver;
+echo         this.locator = locator;
+echo     }
+echo     public void click() {
+echo         WebElement btn = driver.findElement(locator);
+echo         if (btn.isDisplayed() && btn.isEnabled()) {
+echo             btn.click();
+echo         }
+echo     }
+echo     public boolean isDisplayed() {
+echo         return driver.findElement(locator).isDisplayed();
+echo     }
+echo }
+)
+
+:: LoginPage.java
+> src\test\java\com\salesforce\pages\LoginPage.java (
+echo package com.salesforce.pages;
+echo import com.salesforce.models.User;
+echo import org.openqa.selenium.By;
+echo import org.openqa.selenium.WebDriver;
+echo public class LoginPage {
+echo     private WebDriver driver;
+echo     private By usernameInput = By.id("username");
+echo     private By passwordInput = By.id("password");
+echo     private By loginButton = By.id("Login");
+echo     public LoginPage(WebDriver driver) {
+echo         this.driver = driver;
+echo     }
+echo     public void login(User user) {
+echo         driver.findElement(usernameInput).sendKeys(user.getUsername());
+echo         driver.findElement(passwordInput).sendKeys(user.getPassword());
+echo         driver.findElement(loginButton).click();
+echo     }
+echo }
+)
+
+:: TestBase.java
+> src\test\java\com\salesforce\utils\TestBase.java (
+echo package com.salesforce.utils;
+echo import io.github.bonigarcia.wdm.WebDriverManager;
+echo import org.openqa.selenium.WebDriver;
+echo import org.openqa.selenium.chrome.ChromeDriver;
+echo import org.testng.annotations.*;
+echo public class TestBase {
+echo     protected WebDriver driver;
+echo     @BeforeMethod
+echo     public void setUp() {
+echo         WebDriverManager.chromedriver().setup();
+echo         driver = new ChromeDriver();
+echo         driver.manage().window().maximize();
+echo         driver.get("https://login.salesforce.com");
+echo     }
+echo     @AfterMethod
+echo     public void tearDown() {
+echo         if (driver != null) {
+echo             driver.quit();
+echo         }
+echo     }
+echo }
+)
+
+:: CPQOpportunityTest.java
+> src\test\java\com\salesforce\tests\CPQOpportunityTest.java (
+echo package com.salesforce.tests;
+echo import com.salesforce.models.User;
+echo import com.salesforce.pages.LoginPage;
+echo import com.salesforce.utils.TestBase;
+echo import org.testng.Assert;
+echo import org.testng.annotations.Test;
+echo public class CPQOpportunityTest extends TestBase {
+echo     @Test
+echo     public void loginToSalesforce() {
+echo         User user = new User("your.email@example.com", "yourPassword");
+echo         LoginPage loginPage = new LoginPage(driver);
+echo         loginPage.login(user);
+echo         Assert.assertTrue(driver.getTitle().contains("Home") ^|^| driver.getCurrentUrl().contains("lightning"), "Login likely succeeded.");
+echo     }
+echo }
+)
+
+echo [✔] Setup complete!
+echo Run the following to build and test:
+echo cd salesforce-mcp-ui-tests
+echo mvn clean test
+
+endlocal
